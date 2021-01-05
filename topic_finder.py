@@ -1,17 +1,24 @@
-#import modules
+# import modules
 import os.path
+import sklearn
+
+import nltk
 from gensim import corpora
 from gensim.models import LsiModel
 from nltk.tokenize import RegexpTokenizer
 from nltk.corpus import stopwords
 from nltk.stem.porter import PorterStemmer
 from gensim.models.coherencemodel import CoherenceModel
+from pprint import pprint
 import matplotlib.pyplot as plt
 
-# made with 
-# https://www.datacamp.com/community/tutorials/discovering-hidden-topics-python
 
-def load_data(path,file_name):
+# made with
+# https://www.datacamp.com/community/tutorials/discovering-hidden-topics-python
+from sklearn.datasets import fetch_20newsgroups
+
+
+def load_data(path, file_name):
     """
     Input  : path and file_name
     Purpose: loading text file
@@ -19,14 +26,15 @@ def load_data(path,file_name):
              title(initial 100 words considred as title of document)
     """
     documents_list = []
-    titles=[]
-    with open( os.path.join(path, file_name) ,"r") as fin:
+    titles = []
+    with open(os.path.join(path, file_name), "rb") as fin:
         for line in fin.readlines():
             text = line.strip()
             documents_list.append(text)
-    print("Total Number of Documents:",len(documents_list))
-    titles.append( text[0:min(len(text),100)] )
-    return documents_list,titles
+    print("Total Number of Documents:", len(documents_list))
+    titles.append(text[0:min(len(text), 100)])
+    return documents_list, titles
+
 
 def preprocess_data(doc_set):
     """
@@ -55,6 +63,7 @@ def preprocess_data(doc_set):
         texts.append(stemmed_tokens)
     return texts
 
+
 def prepare_corpus(doc_clean):
     """
     Input  : clean document
@@ -66,19 +75,21 @@ def prepare_corpus(doc_clean):
     # Converting list of documents (corpus) into Document Term Matrix using dictionary prepared above.
     doc_term_matrix = [dictionary.doc2bow(doc) for doc in doc_clean]
     # generate LDA model
-    return dictionary,doc_term_matrix
+    return dictionary, doc_term_matrix
 
-def create_gensim_lsa_model(doc_clean,number_of_topics,words):
+
+def create_gensim_lsa_model(doc_clean, number_of_topics, words):
     """
     Input  : clean document, number of topics and number of words associated with each topic
     Purpose: create LSA model using gensim
     Output : return LSA model
     """
-    dictionary,doc_term_matrix=prepare_corpus(doc_clean)
+    dictionary, doc_term_matrix = prepare_corpus(doc_clean)
     # generate LSA model
-    lsamodel = LsiModel(doc_term_matrix, num_topics=number_of_topics, id2word = dictionary)  # train model
+    lsamodel = LsiModel(doc_term_matrix, num_topics=number_of_topics, id2word=dictionary)  # train model
     print(lsamodel.print_topics(num_topics=number_of_topics, num_words=words))
     return lsamodel
+
 
 def compute_coherence_values(dictionary, doc_term_matrix, doc_clean, stop, start=2, step=3):
     """
@@ -101,15 +112,16 @@ def compute_coherence_values(dictionary, doc_term_matrix, doc_clean, stop, start
     model_list = []
     for number_of_topics in range(start, stop, step):
         # generate LSA model
-        model = LsiModel(doc_term_matrix, num_topics=number_of_topics, id2word = dictionary)  # train model
+        model = LsiModel(doc_term_matrix, num_topics=number_of_topics, id2word=dictionary)  # train model
         model_list.append(model)
         coherencemodel = CoherenceModel(model=model, texts=doc_clean, dictionary=dictionary, coherence='c_v')
         coherence_values.append(coherencemodel.get_coherence())
     return model_list, coherence_values
 
-def plot_graph(doc_clean,start, stop, step):
-    dictionary,doc_term_matrix=prepare_corpus(doc_clean)
-    model_list, coherence_values = compute_coherence_values(dictionary, doc_term_matrix,doc_clean,
+
+def plot_graph(doc_clean, start, stop, step):
+    dictionary, doc_term_matrix = prepare_corpus(doc_clean)
+    model_list, coherence_values = compute_coherence_values(dictionary, doc_term_matrix, doc_clean,
                                                             stop, start, step)
     # Show graph
     x = range(start, stop, step)
@@ -119,8 +131,8 @@ def plot_graph(doc_clean,start, stop, step):
     plt.legend(("coherence_values"), loc='best')
     plt.show()
 
+
 if __name__ == "__main__":
-    
     # 1. load data
     # 2. preprocess it
     # 3. prepare corpus
@@ -129,10 +141,11 @@ if __name__ == "__main__":
     # 5. compute number of topics
     # 6. plot graph 
     # LSA Model
-    number_of_topics = 7
-    words = 10
-    document_list,titles = load_data("", "test_articles.txt")
-    clean_text = preprocess_data(document_list)
-    model = create_gensim_lsa_model(clean_text, number_of_topics, words)
-    
+    # number_of_topics = 7
+    # words = 10
+    # document_list,titles = load_data("", "test_articles.txt")
+    # clean_text = preprocess_data(document_list)
+    # model = create_gensim_lsa_model(clean_text, number_of_topics, words)
+    newsgroups_train = fetch_20newsgroups(subset='train', remove=list('headers'))
+    pprint(list(newsgroups_train.target_names))
     # idk if this is desired output
