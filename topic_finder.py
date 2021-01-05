@@ -43,9 +43,10 @@ def preprocess_data(doc_set):
         stopped_tokens = [i for i in tokens if not i in en_stop]
         # stem tokens
         stemmed_tokens = [p_stemmer.stem(i) for i in stopped_tokens]
-        removed_3_letter = [i for i in stemmed_tokens if len(i) > 3]
+        removed_3_letter = [i for i in stemmed_tokens if len(i) > 2]
+        removed_digits = [word for word in removed_3_letter if not word.isdigit()]
         # add tokens to list
-        texts.append(removed_3_letter)
+        texts.append(removed_digits)
     return texts
 
 
@@ -117,57 +118,6 @@ def plot_graph(doc_clean, start, stop, step):
     plt.show()
 
 
-def preprocess(words):
-    #we'll make use of python's translate function,that maps one set of characters to another
-    #we create an empty mapping table, the third argument allows us to list all of the characters 
-    #to remove during the translation process
-    
-    #first we will try to filter out some  unnecessary data like tabs
-    table = str.maketrans('', '', '\t')
-    words = [word.translate(table) for word in words]
-    
-    punctuations = (string.punctuation).replace("'", "") 
-    # the character: ' appears in a lot of stopwords and changes meaning of words if removed
-    #hence it is removed from the list of symbols that are to be discarded from the documents
-    trans_table = str.maketrans('', '', punctuations)
-    stripped_words = [word.translate(trans_table) for word in words]
-    
-    #some white spaces may be added to the list of words, due to the translate function & nature of our documents
-    #we remove them below
-    words = [str for str in stripped_words if str]
-    
-    #some words are quoted in the documents & as we have not removed ' to maintain the integrity of some stopwords
-    #we try to unquote such words below
-    p_words = []
-    for word in words:
-        if (word[0] and word[len(word)-1] == "'"):
-            word = word[1:len(word)-1]
-        elif(word[0] == "'"):
-            word = word[1:len(word)]
-        else:
-            word = word
-        p_words.append(word)
-    
-    words = p_words.copy()
-        
-    #we will also remove just-numeric strings as they do not have any significant meaning in text classification
-    words = [word for word in words if not word.isdigit()]
-    
-    #we will also remove single character strings
-    words = [word for word in words if not len(word) == 1]
-    
-    #after removal of so many characters it may happen that some strings have become blank, we remove those
-    words = [str for str in words if str]
-    
-    #we also normalize the cases of our words
-    words = [word.lower() for word in words]
-    
-    #we try to remove words with only 2 characters
-    words = [word for word in words if len(word) > 2]
-    
-    return words
-
-
 if __name__ == "__main__":
     # 1. load data
     # 2. preprocess it
@@ -180,7 +130,7 @@ if __name__ == "__main__":
     # LSA Model
     number_of_topics = 7
     words = 5
-    newsgroups_train = fetch_20newsgroups(subset='all', remove=('headers', 'footers', 'quotes'), categories=['alt.atheism', 'misc.forsale'])
+    newsgroups_train = fetch_20newsgroups(subset='all', remove=('headers', 'footers', 'quotes'), categories=['talk.religion.misc'])
     # document_list,titles = load_data("", "test_articles.txt")
     clean_text = preprocess_data(newsgroups_train.data)
     model = create_gensim_lsa_model(clean_text, number_of_topics, words)
