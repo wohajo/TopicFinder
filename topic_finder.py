@@ -132,6 +132,57 @@ def plot_graph(doc_clean, start, stop, step):
     plt.show()
 
 
+def preprocess(words):
+    #we'll make use of python's translate function,that maps one set of characters to another
+    #we create an empty mapping table, the third argument allows us to list all of the characters 
+    #to remove during the translation process
+    
+    #first we will try to filter out some  unnecessary data like tabs
+    table = str.maketrans('', '', '\t')
+    words = [word.translate(table) for word in words]
+    
+    punctuations = (string.punctuation).replace("'", "") 
+    # the character: ' appears in a lot of stopwords and changes meaning of words if removed
+    #hence it is removed from the list of symbols that are to be discarded from the documents
+    trans_table = str.maketrans('', '', punctuations)
+    stripped_words = [word.translate(trans_table) for word in words]
+    
+    #some white spaces may be added to the list of words, due to the translate function & nature of our documents
+    #we remove them below
+    words = [str for str in stripped_words if str]
+    
+    #some words are quoted in the documents & as we have not removed ' to maintain the integrity of some stopwords
+    #we try to unquote such words below
+    p_words = []
+    for word in words:
+        if (word[0] and word[len(word)-1] == "'"):
+            word = word[1:len(word)-1]
+        elif(word[0] == "'"):
+            word = word[1:len(word)]
+        else:
+            word = word
+        p_words.append(word)
+    
+    words = p_words.copy()
+        
+    #we will also remove just-numeric strings as they do not have any significant meaning in text classification
+    words = [word for word in words if not word.isdigit()]
+    
+    #we will also remove single character strings
+    words = [word for word in words if not len(word) == 1]
+    
+    #after removal of so many characters it may happen that some strings have become blank, we remove those
+    words = [str for str in words if str]
+    
+    #we also normalize the cases of our words
+    words = [word.lower() for word in words]
+    
+    #we try to remove words with only 2 characters
+    words = [word for word in words if len(word) > 2]
+    
+    return words
+
+
 if __name__ == "__main__":
     # 1. load data
     # 2. preprocess it
@@ -146,6 +197,10 @@ if __name__ == "__main__":
     # document_list,titles = load_data("", "test_articles.txt")
     # clean_text = preprocess_data(document_list)
     # model = create_gensim_lsa_model(clean_text, number_of_topics, words)
-    newsgroups_train = fetch_20newsgroups(subset='train', remove=list('headers'))
-    pprint(list(newsgroups_train.target_names))
+    newsgroups_train = fetch_20newsgroups(subset='train', remove=('headers', 'footers', 'quotes'))
+    newsgroups_test = fetch_20newsgroups(subset='test', remove=('headers', 'footers', 'quotes'))
+    print(newsgroups_train.data[-1],'\n\n','#'*100, '\n\n')
+    print(newsgroups_train.data[-1],'\n\n','#'*100, '\n\n')
+    print("training len:", len(newsgroups_train.data))
+    print("test len:", len(newsgroups_test.data))
     # idk if this is desired output
