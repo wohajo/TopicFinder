@@ -1,5 +1,7 @@
 # import modules
 import os.path
+import string
+
 import sklearn
 
 import nltk
@@ -16,25 +18,6 @@ import matplotlib.pyplot as plt
 # made with
 # https://www.datacamp.com/community/tutorials/discovering-hidden-topics-python
 from sklearn.datasets import fetch_20newsgroups
-
-
-def load_data(path, file_name):
-    """
-    Input  : path and file_name
-    Purpose: loading text file
-    Output : list of paragraphs/documents and
-             title(initial 100 words considred as title of document)
-    """
-    documents_list = []
-    titles = []
-    with open(os.path.join(path, file_name), "rb") as fin:
-        for line in fin.readlines():
-            text = line.strip()
-            documents_list.append(text)
-    print("Total Number of Documents:", len(documents_list))
-    titles.append(text[0:min(len(text), 100)])
-    return documents_list, titles
-
 
 def preprocess_data(doc_set):
     """
@@ -54,13 +37,15 @@ def preprocess_data(doc_set):
     for i in doc_set:
         # clean and tokenize document string
         raw = i.lower()
+        punctuations = (string.punctuation).replace("'", "")
         tokens = tokenizer.tokenize(raw)
         # remove stop words from tokens
         stopped_tokens = [i for i in tokens if not i in en_stop]
         # stem tokens
         stemmed_tokens = [p_stemmer.stem(i) for i in stopped_tokens]
+        removed_3_letter = [i for i in stemmed_tokens if len(i) > 3]
         # add tokens to list
-        texts.append(stemmed_tokens)
+        texts.append(removed_3_letter)
     return texts
 
 
@@ -192,15 +177,10 @@ if __name__ == "__main__":
     # 5. compute number of topics
     # 6. plot graph 
     # LSA Model
-    # number_of_topics = 7
-    # words = 10
+    # LSA Model
+    number_of_topics = 7
+    words = 5
+    newsgroups_train = fetch_20newsgroups(subset='all', remove=('headers', 'footers', 'quotes'), categories=['alt.atheism', 'misc.forsale'])
     # document_list,titles = load_data("", "test_articles.txt")
-    # clean_text = preprocess_data(document_list)
-    # model = create_gensim_lsa_model(clean_text, number_of_topics, words)
-    newsgroups_train = fetch_20newsgroups(subset='train', remove=('headers', 'footers', 'quotes'))
-    newsgroups_test = fetch_20newsgroups(subset='test', remove=('headers', 'footers', 'quotes'))
-    print(newsgroups_train.data[-1],'\n\n','#'*100, '\n\n')
-    print(newsgroups_train.data[-1],'\n\n','#'*100, '\n\n')
-    print("training len:", len(newsgroups_train.data))
-    print("test len:", len(newsgroups_test.data))
-    # idk if this is desired output
+    clean_text = preprocess_data(newsgroups_train.data)
+    model = create_gensim_lsa_model(clean_text, number_of_topics, words)
